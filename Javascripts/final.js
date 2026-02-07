@@ -9,9 +9,14 @@ const canvas = document.getElementById('finalCanvas'),
       addSeaweedBtn = document.getElementById('addSeaweed'),
       addAxBtn = document.getElementById('addAx'),
       addBubbleBtn = document.getElementById('addBubble'),
-      downloadBtn = document.getElementById('downloadBtn'),
+      shareBtn = document.getElementById('shareBtn'),
       homeBtn = document.getElementById('homeBtn'),
-      resetBtn = document.getElementById('reset');
+      resetBtn = document.getElementById('reset'),
+      emailModal = document.getElementById('emailModal'),
+      emailInput = document.getElementById('emailInput'),
+      sendEmailBtn = document.getElementById('sendEmailBtn'),
+      cancelBtn = document.getElementById('cancelBtn'),
+      closeBtn = document.querySelector('.close');
 
 // sticker state
 let stickers = [], dragOffset = { x: 0, y: 0 }, selectedSticker = null;
@@ -111,9 +116,85 @@ addBubbleBtn.addEventListener('click', () => { addSticker(bubbleImages[bubbleInd
 // reset
 resetBtn.addEventListener('click', () => { stickers = []; drawCanvas(); });
 
-// download
-downloadBtn.addEventListener('click', () => {
-  canvas.toBlob(blob => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'fish-photobooth.png'; a.click(); }, 'image/png');
+// share
+shareBtn.addEventListener('click', () => {
+  emailModal.style.display = 'block';
+});
+
+// modal event listeners
+closeBtn.addEventListener('click', () => {
+  emailModal.style.display = 'none';
+  emailInput.value = '';
+});
+
+cancelBtn.addEventListener('click', () => {
+  emailModal.style.display = 'none';
+  emailInput.value = '';
+});
+
+sendEmailBtn.addEventListener('click', async () => {
+  const email = emailInput.value.trim();
+  if (!email) {
+    alert('Please enter a valid email address.');
+    return;
+  }
+
+  // Show loading state
+  const originalText = sendEmailBtn.textContent;
+  sendEmailBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+  sendEmailBtn.disabled = true;
+
+  try {
+    // Convert canvas to base64 image data
+    const imageData = canvas.toDataURL('image/png');
+
+    // Prepare email data
+    const emailData = {
+      to_email: email,
+      from_name: 'CS Club Photobooth',
+      subject: '2026 Spring Activities Fair with Computer Science Club',
+      message: `Hi there!\n\nSomeone wanted to share their awesome photo from the Computer Science Club photobooth at the 2026 Spring Activities Fair!\n\nCheck out the attached image - it was created using our interactive underwater-themed photobooth where visitors could add fun stickers like fish, octopus, seaweed, and bubbles! 🐠🐙🌊\n\nInterested in Computer Science? Come visit our club booth or reach out to learn more about programming, web development, and all the exciting projects we work on!\n\nHope you enjoy the photo! 🎉\n\nBest regards,\nComputer Science Club`,
+      image_data: imageData
+    };
+
+    // Send email using EmailJS (using your new template)
+    await emailjs.send(
+      'service_nt7h0ek',    // Your EmailJS service ID
+      'template_evikrle',   // Your new EmailJS template ID
+      emailData
+    );
+
+    alert('Photo sent successfully! 🎉\n\nThe recipient will receive your photobooth picture with a nice message from the CS Club!');
+    // Close modal
+    emailModal.style.display = 'none';
+    emailInput.value = '';
+
+  } catch (error) {
+    console.error('Error sending email:', error);
+    
+    // More helpful error messages for users
+    let userMessage = 'Sorry, there was an error sending the email.';
+    
+    if (error.status === 422) {
+      userMessage = 'Please check the email address and try again.';
+    } else if (error.status === 400) {
+      userMessage = 'Email service error. Please try again in a moment.';
+    }
+    
+    alert(userMessage + '\n\nPlease try again or contact the CS Club for assistance.');
+  } finally {
+    // Reset button state
+    sendEmailBtn.innerHTML = originalText;
+    sendEmailBtn.disabled = false;
+  }
+});
+
+// Close modal when clicking outside of it
+window.addEventListener('click', (event) => {
+  if (event.target === emailModal) {
+    emailModal.style.display = 'none';
+    emailInput.value = '';
+  }
 });
 
 // home

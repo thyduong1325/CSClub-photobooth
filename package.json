@@ -1,0 +1,10 @@
+{
+  "name": "cs-club-photobooth",
+  "version": "1.0.0",
+  "description": "CS Club Photobooth Application for 2026 Spring Activities Fair",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve",
+    "start": "npx serve"
+  }
+}

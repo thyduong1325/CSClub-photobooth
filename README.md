@@ -1,38 +1,64 @@
-# Underwater Photobooth Web App 🐠
+# CS Club Photobooth 🐠
 
-An underwater-themed photobooth web application built with vanilla HTML, CSS, and JavaScript. Add cute sea creatures and bubbles to your photos and download them as a photo strip🐡
+An underwater-themed photobooth web application built for the **2026 Spring Activities Fair**! Built with vanilla HTML, CSS, and JavaScript, featuring email sharing powered by EmailJS.
 
-## Features
-- Live camera preview and photo capture
-- Upload custom photos
-- Add + drag and drop stickers 
-- Download your decorated photo strip
-- Fully responsive design
+## Features ✨
+- 📸 Live camera preview and photo capture
+- 📤 Upload custom photos
+- 🐟 Add & drag underwater-themed stickers (fish, octopus, seaweed, bubbles, axolotl)
+- 📧 **Share photos via email** using EmailJS
+- 🌊 Fully responsive underwater theme
+- ☁️ **Deploy anywhere** - GitHub Pages, Vercel, Netlify
 
-## Demo
-[http://photobooth.nashallery.com](http://photobooth.nashallery.com)
+## Quick Start 🚀
 
-## Getting Started
-**Important:** This app uses your camera. You cannot open the HTML file directly in a browser due to camera permissions. You need to serve it with a local server.
+### Option 1: Local Development
+```bash
+# Clone the repository
+git clone https://github.com/thyduong1325/CSClub-photobooth.git
+cd CSClub-photobooth
 
-### Requirements
-- Node.js installed (for `npx serve`)
+# Start local server (required for camera access)
+npx serve
+```
 
-### How to run the project locally
-1. Open a terminal in your project folder:
-   ```bash
-   cd path/to/photobooth-github-tutorial
-   npx serve
-2. Open the URL shown in the terminal (usually http://localhost:3000) in a browser.
+### Option 2: Deploy to Vercel (Recommended)
+1. **Push to GitHub** (if not already done)
+2. **Connect to Vercel**: Go to [vercel.com](https://vercel.com) → Import GitHub repo
+3. **Deploy!** 🎉 (No environment variables needed)
 
-3. Allow camera access when prompted.
+## Email Setup 📧
 
-## License
+The photobooth uses **EmailJS** for sending photos via email:
+- ✅ **Already configured** with working EmailJS account
+- ✅ **No backend required** - Pure frontend solution  
+- ✅ **No Azure/complex setup** needed
+- ✅ **Works with student accounts**
 
-This project is licensed for **educational and personal use only**.  
+📖 **See `SIMPLE_DEPLOYMENT.md` for deployment instructions**
 
-- Users are free to **view, modify, and add to the code** for learning or personal projects. 
-- **Commercial use is strictly prohibited**: you may **not sell, distribute, or use this code** in any commercial product or for-profit purpose.  
-- Any modifications or additions must also comply with this license and cannot be used commercially.  
+## Project Structure 📁
+```
+├── Assets/              # Images and stickers
+├── Javascripts/         # Frontend logic
+├── StyleSheets/         # CSS styling  
+├── *.html              # App pages
+└── package.json        # Simple configuration
+```
+
+## Technology Stack 🛠
+- **Frontend**: Vanilla HTML5, CSS3, JavaScript
+- **Email Service**: EmailJS (no backend needed)
+- **Deployment**: Any static hosting (Vercel, GitHub Pages, Netlify)
+- **Styling**: Custom CSS with underwater theme
+
+## License 📄
+
+This project is licensed for **educational and personal use only**.
+
+- ✅ **Free to use** for educational and personal projects
+- ✅ **Modify and learn** from the code  
+- ❌ **Commercial use prohibited** - cannot be sold or used for profit
+- ❌ **No redistribution** for commercial purposes
 
 By using this project, you agree to these terms.

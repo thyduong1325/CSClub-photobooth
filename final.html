@@ -3,11 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Decorate & Download</title>
+  <title>Decorate & Share</title>
 
   <!-- Favicon -->
   <link rel="icon" href="Assets/fish-photobooth/favicon.png" type="image/x-icon" />
   <link rel="stylesheet" href="StyleSheets/final.css" />
+  
+  <!-- Font Awesome for spinner icon -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  
+  <!-- EmailJS -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
   <div class="logo">
@@ -35,10 +41,30 @@
   </div>
 
   <div class="button-container">
-    <button id="downloadBtn">Download</button>
+    <button id="shareBtn">Share</button>
     <button id="homeBtn">Home</button>
   </div>
 
+  <!-- Email Modal -->
+  <div id="emailModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Share Your Photo</h2>
+      <p>Enter an email address to share your photo:</p>
+      <input type="email" id="emailInput" placeholder="Enter email address" required>
+      <div class="modal-buttons">
+        <button id="sendEmailBtn">Send</button>
+        <button id="cancelBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="Javascripts/final.js"></script>
+  
+  <!-- Initialize EmailJS -->
+  <script>
+    // Initialize EmailJS with your public key
+    emailjs.init("H6_V8a7KYIVqvqpfb");
+  </script>
 </body>
 </html>
