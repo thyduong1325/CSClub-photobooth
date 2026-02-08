@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Camera</title>
 
   <!-- Favicon -->
@@ -11,18 +11,33 @@
 </head>
 <body>
   <div class="logo">
-    <img src="Assets/fish-photobooth/logo-new.png" alt="Logo">
+    <img src="Assets/fish-photobooth/logo.png" alt="Logo">
   </div>
-  <div class="photobooth-container" id="booth">
-    <div class="bubble-container"></div>
-    <div class="countdown-timer">3</div>
-    <canvas id="finalCanvas" width="1176" height="1470"></canvas>
-    <video id="liveVideo" autoplay playsinline muted></video>
-    <img class="frame-overlay" src="Assets/fish-photobooth/camerapage/frame.png" alt="frame overlay" />
+  <div class="camera-wrapper">
+    <!-- Frame navigation arrows -->
+    <button class="frame-arrow frame-arrow-left" id="prevFrame">&#8249;</button>
+    
+    <div class="photobooth-container" id="booth">
+      <canvas id="finalCanvas" width="1000" height="3000"></canvas>
+      <video id="liveVideo" autoplay playsinline muted></video>
+      <img class="frame-overlay" id="frameOverlay" src="Assets/fish-photobooth/camerapage/frame/frame 1.png" alt="frame overlay" />
+    </div>
+    
+    <button class="frame-arrow frame-arrow-right" id="nextFrame">&#8250;</button>
+    
+    <!-- Additional live video on the right -->
+    <div class="right-video-section">
+      <div class="right-video-container">
+        <video id="rightLiveVideo" autoplay playsinline muted></video>
+        <div class="countdown-timer">3</div>
+        <div class="right-video-controls">
+          <button id="takePhoto"></button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="controls">
-    <button id="takePhoto">Capture</button>
     <button id="readyButton" disabled style="display: none;">Ready</button>
   </div>
 

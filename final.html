@@ -17,32 +17,45 @@
 </head>
 <body>
   <div class="logo">
-    <img src="Assets/fish-photobooth/logo-new.png" alt="Logo">
+    <img src="Assets/fish-photobooth/logo.png" alt="Logo">
   </div>
 
-  <div class="heading-content">
-    <div class="menu-header" style="display: none;"></div>
-    <div class="sticker-container">
-      <h1>Add Stickers!</h1>
-      <p>(drag to reposition)</p>
-      <div class="sticker-btns">
-        <button id="addFish" class="sticker-btn fish-btn">Add Fish</button>
-        <button id="addOctopus" class="sticker-btn octopus-btn">Add Octopus</button>
-        <button id="addSeaweed" class="sticker-btn seaweed-btn">Add Seaweed</button>
-        <button id="addAx" class="sticker-btn axolotl-btn">Add Axolotl</button>
-        <button id="addBubble" class="sticker-btn bubble-btn">Add Bubble</button>
-        <button id="reset" class="sticker-btn reset-btn">Reset</button>
+  <div class="main-wrapper">
+    <!-- Frame navigation arrows -->
+    <button class="frame-arrow frame-arrow-left" id="prevFrame">&#8249;</button>
+    
+    <!-- Final strip container (similar to photobooth-container) -->
+    <div class="final-strip-container">
+      <div id="canvasContainer">
+        <canvas id="finalCanvas" width="1000" height="3000"></canvas>
+      </div>
+      <img class="final-frame-overlay" id="finalFrameOverlay" src="Assets/fish-photobooth/camerapage/frame/frame 1.png" alt="frame overlay" />
+    </div>
+
+    <button class="frame-arrow frame-arrow-right" id="nextFrame">&#8250;</button>
+
+    <!-- Right controls section (similar to right-video-section) -->
+    <div class="right-controls-section">
+      <div class="sticker-container">
+        <h1>Add Stickers!</h1>
+        <p>(drag to reposition)</p>
+        <div class="sticker-btns">
+          <button id="addFish" class="sticker-btn fish-btn">Add Fish</button>
+          <button id="addOctopus" class="sticker-btn octopus-btn">Add Octopus</button>
+          <button id="addSeaweed" class="sticker-btn seaweed-btn">Add Seaweed</button>
+          <button id="addAx" class="sticker-btn axolotl-btn">Add Axolotl</button>
+          <button id="addBubble" class="sticker-btn bubble-btn">Add Bubble</button>
+          <button id="reset" class="sticker-btn reset-btn">Reset</button>
+        </div>
+      </div>
+
+      <div class="button-container">
+        <button id="downloadBtn">Download</button>
+        <button id="shareBtn">Share</button>
+        <button id="emailBtn">Email</button>
+        <button id="homeBtn">Home</button>
       </div>
     </div>
-  </div>
-
-  <div id="canvasContainer">
-    <canvas id="finalCanvas" width="1176" height="1470"></canvas>
-  </div>
-
-  <div class="button-container">
-    <button id="shareBtn">Share</button>
-    <button id="homeBtn">Home</button>
   </div>
 
   <!-- Email Modal -->
@@ -53,8 +66,8 @@
       <p>Enter an email address to share your photo:</p>
       <input type="email" id="emailInput" placeholder="Enter email address" required>
       <div class="modal-buttons">
-        <button id="sendEmailBtn">Send</button>
         <button id="cancelBtn">Cancel</button>
+        <button id="sendEmailBtn">Send</button>
       </div>
     </div>
   </div>
