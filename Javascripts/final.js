@@ -29,6 +29,8 @@ const canvas = document.getElementById('finalCanvas'),
 
 // sticker state
 let stickers = [], dragOffset = { x: 0, y: 0 }, selectedSticker = null;
+let isResizing = false, isRotating = false;
+const HANDLE_SIZE = 12;
 
 // frame image for canvas drawing
 const frameImage = new Image();
@@ -55,7 +57,112 @@ function drawCanvas() {
     ctx.drawImage(frameImage, 0, 0, WIDTH, HEIGHT);
   }
   // Draw stickers on top of frame
-  stickers.forEach(s => ctx.drawImage(s.img, s.x, s.y, s.width, s.height));
+  stickers.forEach(s => {
+    ctx.save();
+    const centerX = s.x + s.width / 2;
+    const centerY = s.y + s.height / 2;
+    ctx.translate(centerX, centerY);
+    ctx.rotate(s.rotation || 0);
+    ctx.drawImage(s.img, -s.width / 2, -s.height / 2, s.width, s.height);
+    ctx.restore();
+  });
+  
+  // Draw selection handles for selected sticker
+  if (selectedSticker && !selectedSticker.dragging && !isResizing && !isRotating) {
+    drawSelectionHandles(selectedSticker);
+  }
+}
+
+// draw selection handles
+function drawSelectionHandles(sticker) {
+  const handles = getStickerHandles(sticker);
+  
+  ctx.save();
+  ctx.strokeStyle = '#0066ff';
+  ctx.fillStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  
+  // Draw bounding box
+  const corners = [
+    { x: sticker.x, y: sticker.y },
+    { x: sticker.x + sticker.width, y: sticker.y },
+    { x: sticker.x + sticker.width, y: sticker.y + sticker.height },
+    { x: sticker.x, y: sticker.y + sticker.height }
+  ];
+  
+  if (sticker.rotation) {
+    const centerX = sticker.x + sticker.width / 2;
+    const centerY = sticker.y + sticker.height / 2;
+    corners.forEach(corner => {
+      const rotated = rotatePoint(corner.x, corner.y, centerX, centerY, sticker.rotation);
+      corner.x = rotated.x;
+      corner.y = rotated.y;
+    });
+  }
+  
+  ctx.beginPath();
+  ctx.moveTo(corners[0].x, corners[0].y);
+  corners.slice(1).forEach(corner => ctx.lineTo(corner.x, corner.y));
+  ctx.closePath();
+  ctx.stroke();
+  
+  // Draw handles
+  Object.values(handles).forEach(handle => {
+    ctx.beginPath();
+    ctx.arc(handle.x, handle.y, HANDLE_SIZE / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  });
+  
+  ctx.restore();
+}
+
+// get sticker handle positions
+function getStickerHandles(sticker) {
+  const centerX = sticker.x + sticker.width / 2;
+  const centerY = sticker.y + sticker.height / 2;
+  const rotation = sticker.rotation || 0;
+  
+  const corners = {
+    topLeft: { x: sticker.x, y: sticker.y },
+    topRight: { x: sticker.x + sticker.width, y: sticker.y },
+    bottomRight: { x: sticker.x + sticker.width, y: sticker.y + sticker.height },
+    bottomLeft: { x: sticker.x, y: sticker.y + sticker.height }
+  };
+  
+  // Rotate corners if sticker is rotated
+  if (rotation) {
+    Object.keys(corners).forEach(key => {
+      const rotated = rotatePoint(corners[key].x, corners[key].y, centerX, centerY, rotation);
+      corners[key] = rotated;
+    });
+  }
+  
+  // Add rotation handle (above top center)
+  const topCenter = {
+    x: (corners.topLeft.x + corners.topRight.x) / 2,
+    y: (corners.topLeft.y + corners.topRight.y) / 2 - 25
+  };
+  
+  return {
+    resize: corners.bottomRight,
+    rotate: topCenter,
+    topLeft: corners.topLeft,
+    topRight: corners.topRight,
+    bottomLeft: corners.bottomLeft
+  };
+}
+
+// rotate point around center
+function rotatePoint(x, y, centerX, centerY, angle) {
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  const dx = x - centerX;
+  const dy = y - centerY;
+  return {
+    x: centerX + dx * cos - dy * sin,
+    y: centerY + dx * sin + dy * cos
+  };
 }
 
 // add sticker
@@ -63,14 +170,17 @@ function addSticker(src) {
   const img = new Image();
   img.src = src;
   img.onload = () => {
-    stickers.push({
+    const sticker = {
       img,
       x: WIDTH / 2 - img.width / 5,
       y: HEIGHT / 2 - img.height / 5,
       width: img.width / 2,
       height: img.height / 2,
+      rotation: 0,
       dragging: false
-    });
+    };
+    stickers.push(sticker);
+    selectedSticker = sticker; // Auto-select new sticker
     drawCanvas();
   };
 }
@@ -86,13 +196,36 @@ function getPointerPos(e) {
 // drag and drop
 function pointerDown(e) {
   const { x: mouseX, y: mouseY } = getPointerPos(e);
+  
+  // Check if clicking on a handle first
+  if (selectedSticker) {
+    const handles = getStickerHandles(selectedSticker);
+    
+    // Check resize handle
+    const resizeHandle = handles.resize;
+    if (Math.abs(mouseX - resizeHandle.x) <= HANDLE_SIZE && Math.abs(mouseY - resizeHandle.y) <= HANDLE_SIZE) {
+      isResizing = true;
+      e.preventDefault();
+      return;
+    }
+    
+    // Check rotate handle
+    const rotateHandle = handles.rotate;
+    if (Math.abs(mouseX - rotateHandle.x) <= HANDLE_SIZE && Math.abs(mouseY - rotateHandle.y) <= HANDLE_SIZE) {
+      isRotating = true;
+      e.preventDefault();
+      return;
+    }
+  }
+  
+  // Check if clicking on a sticker
   for (let i = stickers.length - 1; i >= 0; i--) {
     const s = stickers[i];
-    if (mouseX >= s.x && mouseX <= s.x + s.width && mouseY >= s.y && mouseY <= s.y + s.height) {
+    if (isPointInSticker(mouseX, mouseY, s)) {
       selectedSticker = s;
       s.dragging = true;
-      dragOffset.x = mouseX - s.x;
-      dragOffset.y = mouseY - s.y;
+      dragOffset.x = mouseX - (s.x + s.width / 2);
+      dragOffset.y = mouseY - (s.y + s.height / 2);
       stickers.splice(i, 1);
       stickers.push(s);
       drawCanvas();
@@ -100,16 +233,85 @@ function pointerDown(e) {
       break;
     }
   }
+  
+  // If not clicking on any sticker, deselect
+  if (!selectedSticker || !selectedSticker.dragging) {
+    selectedSticker = null;
+    drawCanvas();
+  }
 }
+
+// check if point is inside sticker (considering rotation)
+function isPointInSticker(x, y, sticker) {
+  const centerX = sticker.x + sticker.width / 2;
+  const centerY = sticker.y + sticker.height / 2;
+  
+  if (sticker.rotation) {
+    // Rotate point back to check against unrotated rectangle
+    const rotated = rotatePoint(x, y, centerX, centerY, -sticker.rotation);
+    x = rotated.x;
+    y = rotated.y;
+  }
+  
+  return x >= sticker.x && x <= sticker.x + sticker.width && 
+         y >= sticker.y && y <= sticker.y + sticker.height;
+}
+
 function pointerMove(e) {
-  if (!selectedSticker?.dragging) return;
   const { x: mouseX, y: mouseY } = getPointerPos(e);
-  selectedSticker.x = mouseX - dragOffset.x;
-  selectedSticker.y = mouseY - dragOffset.y;
-  drawCanvas();
-  e.preventDefault();
+  
+  if (isResizing && selectedSticker) {
+    // Resize sticker
+    const centerX = selectedSticker.x + selectedSticker.width / 2;
+    const centerY = selectedSticker.y + selectedSticker.height / 2;
+    
+    let newWidth = Math.abs(mouseX - selectedSticker.x);
+    let newHeight = Math.abs(mouseY - selectedSticker.y);
+    
+    // Maintain aspect ratio
+    const aspectRatio = selectedSticker.img.width / selectedSticker.img.height;
+    if (newWidth / newHeight > aspectRatio) {
+      newWidth = newHeight * aspectRatio;
+    } else {
+      newHeight = newWidth / aspectRatio;
+    }
+    
+    // Minimum size
+    newWidth = Math.max(newWidth, 30);
+    newHeight = Math.max(newHeight, 30);
+    
+    // Update sticker position to keep center fixed
+    selectedSticker.x = centerX - newWidth / 2;
+    selectedSticker.y = centerY - newHeight / 2;
+    selectedSticker.width = newWidth;
+    selectedSticker.height = newHeight;
+    
+    drawCanvas();
+    e.preventDefault();
+  } else if (isRotating && selectedSticker) {
+    // Rotate sticker
+    const centerX = selectedSticker.x + selectedSticker.width / 2;
+    const centerY = selectedSticker.y + selectedSticker.height / 2;
+    const angle = Math.atan2(mouseY - centerY, mouseX - centerX);
+    selectedSticker.rotation = angle + Math.PI / 2; // Adjust for handle position
+    
+    drawCanvas();
+    e.preventDefault();
+  } else if (selectedSticker?.dragging) {
+    // Move sticker
+    selectedSticker.x = mouseX - dragOffset.x - selectedSticker.width / 2;
+    selectedSticker.y = mouseY - dragOffset.y - selectedSticker.height / 2;
+    drawCanvas();
+    e.preventDefault();
+  }
 }
-function pointerUp() { if (selectedSticker) selectedSticker.dragging = false; selectedSticker = null; }
+
+function pointerUp() { 
+  if (selectedSticker) selectedSticker.dragging = false; 
+  isResizing = false;
+  isRotating = false;
+  drawCanvas(); // Redraw to show/hide handles
+}
 
 // mouse events
 canvas.addEventListener('mousedown', pointerDown);
@@ -133,7 +335,11 @@ addAxBtn.addEventListener('click', () => addSticker('Assets/fish-photobooth/came
 addBubbleBtn.addEventListener('click', () => { addSticker('Assets/fish-photobooth/camerapage/stickers/bubble.png'); });
 
 // reset
-resetBtn.addEventListener('click', () => { stickers = []; drawCanvas(); });
+resetBtn.addEventListener('click', () => { 
+  stickers = []; 
+  selectedSticker = null;
+  drawCanvas(); 
+});
 
 // download
 downloadBtn.addEventListener('click', () => {
@@ -505,6 +711,51 @@ if (nextFrameBtn && prevFrameBtn) {
       e.preventDefault();
       console.log('⌨️ Right arrow key pressed');
       nextFrame();
+    } else if (e.key === 'Delete' || e.key === 'Backspace') {
+      // Delete selected sticker
+      if (selectedSticker) {
+        e.preventDefault();
+        const index = stickers.indexOf(selectedSticker);
+        if (index > -1) {
+          stickers.splice(index, 1);
+          selectedSticker = null;
+          drawCanvas();
+        }
+      }
+    } else if (e.key === 'Escape') {
+      // Deselect sticker
+      selectedSticker = null;
+      drawCanvas();
+    } else if (selectedSticker && !e.ctrlKey && !e.metaKey) {
+      // Rotate selected sticker with R key
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        selectedSticker.rotation = (selectedSticker.rotation || 0) + Math.PI / 8; // 22.5 degrees
+        drawCanvas();
+      }
+      // Scale selected sticker with + and - keys
+      else if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        const scale = 1.1;
+        const centerX = selectedSticker.x + selectedSticker.width / 2;
+        const centerY = selectedSticker.y + selectedSticker.height / 2;
+        selectedSticker.width *= scale;
+        selectedSticker.height *= scale;
+        selectedSticker.x = centerX - selectedSticker.width / 2;
+        selectedSticker.y = centerY - selectedSticker.height / 2;
+        drawCanvas();
+      }
+      else if (e.key === '-' || e.key === '_') {
+        e.preventDefault();
+        const scale = 0.9;
+        const centerX = selectedSticker.x + selectedSticker.width / 2;
+        const centerY = selectedSticker.y + selectedSticker.height / 2;
+        selectedSticker.width = Math.max(selectedSticker.width * scale, 20);
+        selectedSticker.height = Math.max(selectedSticker.height * scale, 20);
+        selectedSticker.x = centerX - selectedSticker.width / 2;
+        selectedSticker.y = centerY - selectedSticker.height / 2;
+        drawCanvas();
+      }
     }
   });
   

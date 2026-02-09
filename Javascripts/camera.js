@@ -26,10 +26,10 @@ const moveVideoToHalf = i => {
   const { video } = elements;
   video.style.display = 'block';
   // Position video at different quarters: 0%, 20%, 40%, 60%
-  video.style.top = (i * 210) + 'px';
+  video.style.top = (i * 160) + 'px';
   video.style.left = '0';
   video.style.width = '100%';
-  video.style.height = '210px'; // Slightly smaller than 25% to avoid overlap
+  video.style.height = '160px'; // Slightly smaller than 25% to avoid overlap
 };
 
 // countdown
@@ -53,11 +53,11 @@ const startCountdown = callback => {
 const capturePhoto = () => {
   const { video, ctx, takePhotoBtn } = elements;
 
-  const yOffset = photoStage * 633;
-  const photoHeight = 620;
+  const yOffset = photoStage * 634;
+  const photoHeight = 621;
   const vW = video.videoWidth, vH = video.videoHeight;
 
-  const targetAspect = 1.4; 
+  const targetAspect = 1.41; 
   const vAspect = vW / vH;
   let sx, sy, sw, sh;
 

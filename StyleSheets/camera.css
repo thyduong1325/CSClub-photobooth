@@ -5,7 +5,6 @@ html {
   -webkit-transform: scale(1) !important;
   transform: scale(1) !important;
 }
-
 * {
   box-sizing: border-box;
   margin: 0;
@@ -47,8 +46,8 @@ body {
 /* photobooth container */
 .photobooth-container {
   position: relative;
-  width: 33vmin;
-  max-width: 333px;
+  width: 30vmin;
+  max-width: 250px;
   aspect-ratio: 1000 / 3000;
   background: #D5E8EB;
   overflow: hidden;
@@ -84,7 +83,7 @@ body {
 /* right video container */
 .right-video-container {
   position: relative;
-  width: 100vmin;
+  width: 90vmin;
   max-width: 10000px;
   aspect-ratio: 4000 / 3000;
   background: #D5E8EB;
@@ -231,17 +230,6 @@ button:hover {
   transform: scale(1.05);
 }
 
-#takePhoto {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.56169rem;
-  width: 10rem;
-  height: 3rem;
-  padding: 0.5rem 1rem;
-  background-color: #FFF;
-}
-
 /* bubble container */
 .bubble-container {
   position: absolute;
@@ -257,8 +245,8 @@ button:hover {
 /* frame navigation arrows */
 .frame-arrow {
   position: static;
-  width: 80px;
-  height: 80px;
+  width: 70px;
+  height: 70px;
   border: none;
   border-radius: 50%;
   color: grey;
