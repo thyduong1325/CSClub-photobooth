@@ -266,12 +266,12 @@ button:disabled:hover {
 }
 
 /* individual sticker urls */
-.fish-btn { background-image: url("../Assets/fish-photobooth/finalpage/fishButton.png"); }
-.octopus-btn { background-image: url("../Assets/fish-photobooth/finalpage/octopusButton.png"); }
-.seaweed-btn { background-image: url("../Assets/fish-photobooth/finalpage/seaweedButton.png"); }
-.axolotl-btn { background-image: url("../Assets/fish-photobooth/finalpage/axolotlButton.png"); }
-.bubble-btn { background-image: url("../Assets/fish-photobooth/finalpage/bubbleButton.png"); }
-.reset-btn { background-image: url("../Assets/fish-photobooth/finalpage/resetButton.png"); }
+.fish-btn { background-image: url("../Assets/photobooth/finalpage/starButton.png"); }
+.octopus-btn { background-image: url("../Assets/photobooth/finalpage/heartButton.png"); }
+.seaweed-btn { background-image: url("../Assets/photobooth/finalpage/consoleButton.png"); }
+.ax-btn { background-image: url("../Assets/photobooth/finalpage/arrowsButton.png"); }
+.bubble-btn { background-image: url("../Assets/photobooth/finalpage/dinosaurButton.png"); }
+.reset-btn { background-image: url("../Assets/photobooth/finalpage/resetButton.png"); }
 
 /* heading content */
 .heading-content {
@@ -292,16 +292,6 @@ button:disabled:hover {
   }
 }
 
-/* menu header */
-.menu-header {
-  width: 100%;
-  aspect-ratio: 517/68;
-  background-image: url('../Assets/fish-photobooth/menupage/Header.png');
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
-  margin: 0;
-}
 
 /* Modal Styles */
 .modal {
@@ -376,4 +366,22 @@ button:disabled:hover {
 .modal-buttons button {
   padding: 10px 20px;
   min-width: 80px;
+}
+
+/* Send Email Button - Purple background with white text */
+#sendEmailBtn {
+  background-color: #510C76 !important; /* Purple background */
+  color: white !important; /* White text */
+  border: 2px solid #510C76 !important;
+}
+
+#sendEmailBtn:hover {
+  background-color: #681b91 !important; /* Darker purple on hover */
+  border-color: #681b91 !important;
+  transform: scale(1.05);
+}
+
+#sendEmailBtn:active {
+  background-color: #000000 !important; /* Even darker purple when clicked */
+  transform: scale(0.98);
 }

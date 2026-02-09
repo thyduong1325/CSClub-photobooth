@@ -5,7 +5,7 @@ An underwater-themed photobooth web application built for the **2026 Spring Acti
 ## Features ✨
 - 📸 Live camera preview and photo capture
 - 📤 Upload custom photos
-- 🐟 Add & drag underwater-themed stickers (fish, octopus, seaweed, bubbles, axolotl)
+- 🐟 Add & drag underwater-themed stickers (fish, octopus, seaweed, bubbles, arrows)
 - 📧 **Share photos via email** using EmailJS
 - 🌊 Fully responsive underwater theme
 - ☁️ **Deploy anywhere** - GitHub Pages, Vercel, Netlify

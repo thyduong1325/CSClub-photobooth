@@ -7,7 +7,7 @@ const logoEl = document.querySelector('.logo');
 // set static photobooth image
 const photoboothMock = document.querySelector('.photobooth-mock');
 if (photoboothMock) {
-  photoboothMock.style.backgroundImage = "url('Assets/fish-photobooth/homepage/photobooth_home.png')";
+  photoboothMock.style.backgroundImage = "url('Assets/photobooth/homepage/photobooth_home.png')";
 }
 
 

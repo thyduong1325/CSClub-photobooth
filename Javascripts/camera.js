@@ -10,9 +10,9 @@ const elements = {
   video: document.getElementById('liveVideo'),
   rightVideo: document.getElementById('rightLiveVideo'),
   canvas: document.getElementById('finalCanvas'),
-  ctx: document.getElementById('finalCanvas').getContext('2d'),
+  ctx: document.getElementById('finalCanvas')?.getContext('2d'),
   takePhotoBtn: document.getElementById('takePhoto'),
-  downloadBtn: document.getElementById('downloadBtn'),
+  downloadBtn: document.getElementById('downloadBtn'), // May be null if not present
   countdownEl: document.querySelector('.countdown-timer'),
   frameOverlay: document.getElementById('frameOverlay'),
   prevFrameBtn: document.getElementById('prevFrame'),
@@ -128,10 +128,13 @@ const finalizePhotoStrip = () => {
   photoStage = 0; // Reset for next use
   
   const frame = new Image();
-  frame.src = `Assets/fish-photobooth/camerapage/frame/frame ${currentFrame}.png`;
+  frame.src = `Assets/photobooth/camerapage/frame/frame ${currentFrame}.png`;
   frame.onload = () => {
     ctx.drawImage(frame, 0, 0, WIDTH, HEIGHT);
     localStorage.setItem('photoStrip', canvas.toDataURL('image/png'));
+    // Save the current frame selection for the final page
+    localStorage.setItem('selectedFrame', currentFrame.toString());
+    console.log(`💾 Saved frame ${currentFrame} to localStorage`);
     setTimeout(() => window.location.href = 'final.html', 50);
   };
   frame.complete && frame.onload();
@@ -155,7 +158,16 @@ const setupCamera = () => {
       elements.video.srcObject = stream; 
       elements.video.play(); 
       moveVideoToHalf(0);
-      console.log('✅ Main camera initialized');
+      
+      // Ensure the take photo button is enabled once camera is ready
+      if (elements.takePhotoBtn) {
+        elements.takePhotoBtn.disabled = false;
+        console.log('✅ Main camera initialized');
+        console.log('🎮 Take photo button enabled:', !elements.takePhotoBtn.disabled);
+      } else {
+        console.log('✅ Main camera initialized');
+        console.log('⚠️ Take photo button not found');
+      }
     })
     .catch(err => {
       console.error('❌ Main camera access failed:', err);
@@ -179,9 +191,49 @@ const setupCamera = () => {
 const setupEventListeners = () => {
   const { takePhotoBtn, downloadBtn } = elements;
 
-  takePhotoBtn.addEventListener('click', startPhotoSequence);
+  // Setup take photo button event listener
+  if (takePhotoBtn) {
+    takePhotoBtn.addEventListener('click', startPhotoSequence);
+    console.log('✅ Take photo button event listener added');
+  } else {
+    console.error('❌ Take photo button not found!');
+  }
 
-  downloadBtn.addEventListener('click', downloadPhoto);
+  // Setup download button event listener (optional)
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', downloadPhoto);
+    console.log('✅ Download button event listener added');
+  } else {
+    console.log('ℹ️ Download button not found - skipping (this is normal)');
+  }
+  
+  // Enhanced keyboard support for takePhoto button
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      console.log('🎯 Enter key pressed!');
+      console.log('📋 Button state - disabled:', takePhotoBtn?.disabled);
+      console.log('📋 Photo stage:', photoStage);
+      
+      // Only trigger if button exists, is not disabled and we're not in the middle of a sequence
+      if (takePhotoBtn && !takePhotoBtn.disabled) {
+        console.log('✅ Triggering photo sequence via Enter key');
+        startPhotoSequence();
+      } else {
+        console.log('⚠️ Photo sequence blocked - button disabled, missing, or sequence in progress');
+      }
+    }
+    
+    // Space bar as alternative trigger
+    if (e.key === ' ' || e.code === 'Space') {
+      e.preventDefault();
+      console.log('🎯 Space bar pressed!');
+      if (takePhotoBtn && !takePhotoBtn.disabled) {
+        console.log('✅ Triggering photo sequence via Space bar');
+        startPhotoSequence();
+      }
+    }
+  });
   
   window.addEventListener('resize', () => {
     if (photoStage >= 0 && photoStage <= 3) moveVideoToHalf(photoStage);
@@ -191,7 +243,7 @@ const setupEventListeners = () => {
 // frame switching functions
 const updateFrame = () => {
   const { frameOverlay } = elements;
-  frameOverlay.src = `Assets/fish-photobooth/camerapage/frame/frame ${currentFrame}.png`;
+  frameOverlay.src = `Assets/photobooth/camerapage/frame/frame ${currentFrame}.png`;
   console.log(`🖼️ Switched to frame ${currentFrame}`);
 };
 
@@ -244,7 +296,7 @@ const setupFrameNavigation = () => {
   
   console.log('✅ Frame navigation setup complete!');
   
-  // keyboard navigation for frames
+  // keyboard navigation for frames (only arrow keys)
   document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowLeft') {
       e.preventDefault();
@@ -263,7 +315,11 @@ const initPhotoBooth = () => {
   console.log('🚀 Initializing photobooth...');
   console.log('📋 DOM elements check:');
   console.log('- video:', document.getElementById('liveVideo'));
+  console.log('- rightVideo:', document.getElementById('rightLiveVideo'));
   console.log('- canvas:', document.getElementById('finalCanvas'));
+  console.log('- takePhotoBtn:', document.getElementById('takePhoto'));
+  console.log('- downloadBtn:', document.getElementById('downloadBtn'));
+  console.log('- countdownEl:', document.querySelector('.countdown-timer'));
   console.log('- prevFrame:', document.getElementById('prevFrame'));
   console.log('- nextFrame:', document.getElementById('nextFrame'));
   console.log('- frameOverlay:', document.getElementById('frameOverlay'));
@@ -351,4 +407,24 @@ window.testFrameChange = (frameNumber) => {
   console.log('🧪 Testing frame change to:', frameNumber);
   currentFrame = frameNumber;
   updateFrame();
+};
+
+// Debug function to test Enter key functionality
+window.testEnterKey = () => {
+  console.log('🧪 Testing Enter key functionality...');
+  const { takePhotoBtn } = elements;
+  
+  console.log('📋 Button element:', takePhotoBtn);
+  console.log('📋 Button disabled:', takePhotoBtn ? takePhotoBtn.disabled : 'Button not found');
+  console.log('📋 Photo stage:', photoStage);
+  
+  // Simulate Enter key press
+  const enterEvent = new KeyboardEvent('keydown', {
+    key: 'Enter',
+    code: 'Enter',
+    bubbles: true
+  });
+  
+  console.log('🚀 Dispatching Enter key event...');
+  document.dispatchEvent(enterEvent);
 };

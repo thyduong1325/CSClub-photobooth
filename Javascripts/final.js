@@ -34,7 +34,19 @@ const HANDLE_SIZE = 12;
 
 // frame image for canvas drawing
 const frameImage = new Image();
-frameImage.src = `Assets/fish-photobooth/camerapage/frame/frame ${currentFrame}.png`;
+
+// Load the selected frame from camera page first, then set the frame image
+const savedFrame = localStorage.getItem('selectedFrame');
+if (savedFrame) {
+  currentFrame = parseInt(savedFrame, 10);
+  console.log(`📋 Loaded saved frame: ${currentFrame}`);
+  localStorage.removeItem('selectedFrame'); // Clean up after use
+} else {
+  console.log(`📋 No saved frame found, using default: ${currentFrame}`);
+}
+
+// Set the frame image source with the correct frame
+frameImage.src = `Assets/photobooth/camerapage/frame/frame ${currentFrame}.png`;
 frameImage.onload = () => drawCanvas(); // Redraw when frame loads
 
 // load photo
@@ -182,6 +194,9 @@ function addSticker(src) {
     stickers.push(sticker);
     selectedSticker = sticker; // Auto-select new sticker
     drawCanvas();
+    
+    // Set cursor to move since we auto-select the new sticker
+    canvas.style.cursor = 'move';
   };
 }
 
@@ -205,6 +220,7 @@ function pointerDown(e) {
     const resizeHandle = handles.resize;
     if (Math.abs(mouseX - resizeHandle.x) <= HANDLE_SIZE && Math.abs(mouseY - resizeHandle.y) <= HANDLE_SIZE) {
       isResizing = true;
+      canvas.style.cursor = 'grabbing'; // Set cursor for active resize
       e.preventDefault();
       return;
     }
@@ -213,6 +229,7 @@ function pointerDown(e) {
     const rotateHandle = handles.rotate;
     if (Math.abs(mouseX - rotateHandle.x) <= HANDLE_SIZE && Math.abs(mouseY - rotateHandle.y) <= HANDLE_SIZE) {
       isRotating = true;
+      canvas.style.cursor = 'grabbing'; // Set cursor for active rotation
       e.preventDefault();
       return;
     }
@@ -224,6 +241,7 @@ function pointerDown(e) {
     if (isPointInSticker(mouseX, mouseY, s)) {
       selectedSticker = s;
       s.dragging = true;
+      canvas.style.cursor = 'grabbing'; // Set cursor for active drag
       dragOffset.x = mouseX - (s.x + s.width / 2);
       dragOffset.y = mouseY - (s.y + s.height / 2);
       stickers.splice(i, 1);
@@ -237,6 +255,7 @@ function pointerDown(e) {
   // If not clicking on any sticker, deselect
   if (!selectedSticker || !selectedSticker.dragging) {
     selectedSticker = null;
+    canvas.style.cursor = 'default'; // Reset cursor
     drawCanvas();
   }
 }
@@ -257,10 +276,64 @@ function isPointInSticker(x, y, sticker) {
          y >= sticker.y && y <= sticker.y + sticker.height;
 }
 
+// cursor management
+function updateCursor(mouseX, mouseY) {
+  // Default cursor
+  let cursor = 'default';
+  
+  if (isResizing) {
+    cursor = 'nw-resize'; // During resize operation
+  } else if (isRotating) {
+    cursor = 'grab'; // During rotation (could use 'grabbing' for active rotation)
+  } else if (selectedSticker) {
+    const handles = getStickerHandles(selectedSticker);
+    
+    // Check if hovering over resize handle
+    const resizeHandle = handles.resize;
+    if (Math.abs(mouseX - resizeHandle.x) <= HANDLE_SIZE && Math.abs(mouseY - resizeHandle.y) <= HANDLE_SIZE) {
+      // Calculate resize direction based on handle position relative to sticker center
+      const centerX = selectedSticker.x + selectedSticker.width / 2;
+      const centerY = selectedSticker.y + selectedSticker.height / 2;
+      
+      // For bottom-right handle, show se-resize cursor
+      if (resizeHandle.x > centerX && resizeHandle.y > centerY) {
+        cursor = 'se-resize';
+      } else if (resizeHandle.x > centerX && resizeHandle.y < centerY) {
+        cursor = 'ne-resize';
+      } else if (resizeHandle.x < centerX && resizeHandle.y > centerY) {
+        cursor = 'sw-resize';
+      } else {
+        cursor = 'nw-resize';
+      }
+    }
+    // Check if hovering over rotate handle
+    else if (Math.abs(mouseX - handles.rotate.x) <= HANDLE_SIZE && Math.abs(mouseY - handles.rotate.y) <= HANDLE_SIZE) {
+      cursor = 'grab'; // Rotation cursor
+    }
+    // Check if hovering over sticker body
+    else if (isPointInSticker(mouseX, mouseY, selectedSticker)) {
+      cursor = 'move'; // Move cursor when hovering over sticker
+    }
+  } else {
+    // Check if hovering over any sticker when none is selected
+    for (let i = stickers.length - 1; i >= 0; i--) {
+      if (isPointInSticker(mouseX, mouseY, stickers[i])) {
+        cursor = 'pointer'; // Indicate sticker is clickable
+        break;
+      }
+    }
+  }
+  
+  canvas.style.cursor = cursor;
+}
+
 function pointerMove(e) {
   const { x: mouseX, y: mouseY } = getPointerPos(e);
   
   if (isResizing && selectedSticker) {
+    // Update cursor to grabbing during active resize
+    canvas.style.cursor = 'grabbing';
+    
     // Resize sticker
     const centerX = selectedSticker.x + selectedSticker.width / 2;
     const centerY = selectedSticker.y + selectedSticker.height / 2;
@@ -289,6 +362,9 @@ function pointerMove(e) {
     drawCanvas();
     e.preventDefault();
   } else if (isRotating && selectedSticker) {
+    // Update cursor to indicate active rotation
+    canvas.style.cursor = 'grabbing';
+    
     // Rotate sticker
     const centerX = selectedSticker.x + selectedSticker.width / 2;
     const centerY = selectedSticker.y + selectedSticker.height / 2;
@@ -298,11 +374,17 @@ function pointerMove(e) {
     drawCanvas();
     e.preventDefault();
   } else if (selectedSticker?.dragging) {
+    // Update cursor to grabbing during active drag
+    canvas.style.cursor = 'grabbing';
+    
     // Move sticker
     selectedSticker.x = mouseX - dragOffset.x - selectedSticker.width / 2;
     selectedSticker.y = mouseY - dragOffset.y - selectedSticker.height / 2;
     drawCanvas();
     e.preventDefault();
+  } else {
+    // Update cursor based on what's under the mouse when not dragging
+    updateCursor(mouseX, mouseY);
   }
 }
 
@@ -310,6 +392,10 @@ function pointerUp() {
   if (selectedSticker) selectedSticker.dragging = false; 
   isResizing = false;
   isRotating = false;
+  
+  // Reset cursor to default, then let pointerMove update it on next mouse move
+  canvas.style.cursor = 'default';
+  
   drawCanvas(); // Redraw to show/hide handles
 }
 
@@ -317,7 +403,10 @@ function pointerUp() {
 canvas.addEventListener('mousedown', pointerDown);
 canvas.addEventListener('mousemove', pointerMove);
 canvas.addEventListener('mouseup', pointerUp);
-canvas.addEventListener('mouseleave', pointerUp);
+canvas.addEventListener('mouseleave', () => {
+  pointerUp(); // Reset states
+  canvas.style.cursor = 'default'; // Reset cursor when leaving canvas
+});
 
 // touch events
 canvas.addEventListener('touchstart', pointerDown);
@@ -326,13 +415,13 @@ canvas.addEventListener('touchend', pointerUp);
 canvas.addEventListener('touchcancel', pointerUp);
 
 // stickers
-addFishBtn.addEventListener('click', () => addSticker('Assets/fish-photobooth/camerapage/stickers/fish.png'));
-addOctopusBtn.addEventListener('click', () => addSticker('Assets/fish-photobooth/camerapage/stickers/octopus.png'));
+addFishBtn.addEventListener('click', () => addSticker('Assets/photobooth/camerapage/stickers/star.png'));
+addOctopusBtn.addEventListener('click', () => addSticker('Assets/photobooth/camerapage/stickers/heart.png'));
 
 
-addSeaweedBtn.addEventListener('click', () => { addSticker('Assets/fish-photobooth/camerapage/stickers/seaweed.png'); });
-addAxBtn.addEventListener('click', () => addSticker('Assets/fish-photobooth/camerapage/stickers/axolotl.png'));
-addBubbleBtn.addEventListener('click', () => { addSticker('Assets/fish-photobooth/camerapage/stickers/bubble.png'); });
+addSeaweedBtn.addEventListener('click', () => { addSticker('Assets/photobooth/camerapage/stickers/console.png'); });
+addAxBtn.addEventListener('click', () => addSticker('Assets/photobooth/camerapage/stickers/arrows.png'));
+addBubbleBtn.addEventListener('click', () => { addSticker('Assets/photobooth/camerapage/stickers/dinosaur.png'); });
 
 // reset
 resetBtn.addEventListener('click', () => { 
@@ -393,8 +482,8 @@ shareBtn.addEventListener('click', async () => {
     
     // Try sharing with file
     await navigator.share({
-      title: '🐠 CS Club Photobooth Photo',
-      text: 'Check out my awesome photo from the Computer Science Club photobooth at the 2026 Spring Activities Fair! 🐠🐙🌊',
+      title: '2026 Spring Activities Fair CS Club Photobooth',
+      text: 'Nice to see you at the 2026 Spring Activities Fair!',
       files: [file]
     });
     
@@ -422,8 +511,8 @@ shareBtn.addEventListener('click', async () => {
       
       if (navigator.share) {
         await navigator.share({
-          title: '🐠 CS Club Photobooth Photo',
-          text: 'Check out the Computer Science Club photobooth at the 2026 Spring Activities Fair! Create your own underwater-themed photo with stickers! 🐠🐙🌊',
+          title: '2026 Spring Activities Fair CS Club Photobooth',
+          text: 'Nice to see you at the 2026 Spring Activities Fair!',
           url: window.location.href
         });
         
@@ -561,15 +650,13 @@ sendEmailBtn.addEventListener('click', async () => {
     const formData = {
       from_name: 'UST Computer Science Club',
       from_email: 'csclub@stthomas.edu',
-      message: `Someone wanted to share their awesome photo from the Computer Science Club photobooth at the 2026 Spring Activities Fair!
-
-Check out this fantastic underwater-themed photo created using our interactive photobooth where visitors can add fun stickers like fish, octopus, seaweed, and bubbles! 🐠🐙🌊
-
-Interested in Computer Science? Come visit our club booth or reach out to learn more about programming, web development, and all the exciting projects we work on!
-
-Hope you enjoy the photo! 🎉
-
-This image has been compressed for email delivery. For full quality, use the Download button on the photobooth!`,
+      message:`Hey! 👋
+      
+      Here is the awesome photo from the CS Club photobooth at the Spring Activities Fair! 
+      
+      🖥️ Interested in coding, web development, or tech projects? Come check out our Computer Science Club! We're always working on exciting stuff and would love to have you join us!
+      
+      Hope you love the photo! 🎉`,
       to_email: email,
       image_data: imageData
     };
@@ -665,12 +752,12 @@ window.addEventListener('click', (event) => {
 // frame navigation functions
 const updateFrame = () => {
   // Update canvas frame image
-  frameImage.src = `Assets/fish-photobooth/camerapage/frame/frame ${currentFrame}.png`;
+  frameImage.src = `Assets/photobooth/camerapage/frame/frame ${currentFrame}.png`;
   frameImage.onload = () => drawCanvas(); // Redraw canvas when frame loads
   
   // Also update HTML overlay (keep it hidden but functional for consistency)
   if (frameOverlay) {
-    frameOverlay.src = `Assets/fish-photobooth/camerapage/frame/frame ${currentFrame}.png`;
+    frameOverlay.src = `Assets/photobooth/camerapage/frame/frame ${currentFrame}.png`;
     console.log(`🖼️ Switched to frame ${currentFrame}`);
   }
 };
@@ -774,4 +861,11 @@ homeBtn.addEventListener('click', () => window.location.href = 'index.html');
 document.addEventListener('DOMContentLoaded', () => {
   const logo = document.querySelector('.logo');
   if (logo) logo.addEventListener('click', () => window.location.href = 'index.html');
+  
+  // Ensure the frame overlay is updated with the correct frame on page load
+  console.log('📄 DOM loaded - ensuring frame overlay matches current frame');
+  if (frameOverlay) {
+    frameOverlay.src = `Assets/photobooth/camerapage/frame/frame ${currentFrame}.png`;
+    console.log(`🖼️ Set frame overlay to frame ${currentFrame}`);
+  }
 });
