@@ -1,4 +1,4 @@
-# CS Club Photobooth �
+# CS Club Photobooth 
 
 A modern web-based photobooth application built for the **2026 Spring Activities Fair**! Take or upload photos, customize with stickers, and share via email - all powered by vanilla HTML, CSS, and JavaScript.
 
