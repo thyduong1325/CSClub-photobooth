@@ -1,18 +1,35 @@
-# CS Club Photobooth 🐠
+# CS Club Photobooth �
 
-An underwater-themed photobooth web application built for the **2026 Spring Activities Fair**! Built with vanilla HTML, CSS, and JavaScript, featuring email sharing powered by EmailJS.
+A modern web-based photobooth application built for the **2026 Spring Activities Fair**! Take or upload photos, customize with stickers, and share via email - all powered by vanilla HTML, CSS, and JavaScript.
 
-## Features ✨
-- 📸 Live camera preview and photo capture
-- 📤 Upload custom photos
-- 🐟 Add & drag underwater-themed stickers (fish, octopus, seaweed, bubbles, arrows)
-- 📧 **Share photos via email** using EmailJS
-- 🌊 Fully responsive underwater theme
-- ☁️ **Deploy anywhere** - GitHub Pages, Vercel, Netlify
+## ✨ Features
 
-## Quick Start 🚀
+### 📷 Photo Capture & Upload
+- **Live Camera Feed**: Real-time camera preview with countdown timer
+- **4-Photo Strip**: Automatically captures 4 photos in classic photobooth style
+- **Photo Upload**: Alternative mode for uploading existing photos
+- **Frame Selection**: Choose from 5 different decorative frames
 
-### Option 1: Local Development
+### 🎨 Photo Customization
+- **Interactive Stickers**: 6 themed stickers (star, heart, console, arrows, dinosaur, energy)
+- **Drag & Drop**: Intuitive sticker positioning with visual feedback
+- **Resize & Rotate**: Full sticker manipulation with selection handles
+- **Smart Cursors**: Context-aware cursor changes for better UX
+
+### 📧 Sharing & Export
+- **Email Integration**: Share photos directly via EmailJS (no backend required)
+- **Download**: Save photo strips as PNG files
+- **LocalStorage**: Seamless data transfer between pages
+
+### 🎯 User Experience
+- **Responsive Design**: Works on desktop and mobile devices
+- **Keyboard Navigation**: Arrow keys for frame selection, keyboard shortcuts
+- **Modern UI**: Clean, professional interface with smooth animations
+- **Error Handling**: Comprehensive error management and user feedback
+
+## 🚀 Quick Start
+
+### Local Development
 ```bash
 # Clone the repository
 git clone https://github.com/thyduong1325/CSClub-photobooth.git
@@ -20,45 +37,139 @@ cd CSClub-photobooth
 
 # Start local server (required for camera access)
 npx serve
+# or
+python -m http.server 3000
 ```
 
-### Option 2: Deploy to Vercel (Recommended)
-1. **Push to GitHub** (if not already done)
-2. **Connect to Vercel**: Go to [vercel.com](https://vercel.com) → Import GitHub repo
-3. **Deploy!** 🎉 (No environment variables needed)
+### Deploy to Vercel (Recommended)
+1. Push to GitHub repository
+2. Connect to [Vercel](https://vercel.com)
+3. Deploy with zero configuration needed!
 
-## Email Setup 📧
+## 📁 Project Structure
 
-The photobooth uses **EmailJS** for sending photos via email:
-- ✅ **Already configured** with working EmailJS account
-- ✅ **No backend required** - Pure frontend solution  
-- ✅ **No Azure/complex setup** needed
-- ✅ **Works with student accounts**
-
-📖 **See `SIMPLE_DEPLOYMENT.md` for deployment instructions**
-
-## Project Structure 📁
 ```
-├── Assets/              # Images and stickers
-├── Javascripts/         # Frontend logic
-├── StyleSheets/         # CSS styling  
-├── *.html              # App pages
-└── package.json        # Simple configuration
+CSClub-photobooth/
+├── 📄 Pages
+│   ├── index.html          # Homepage with start button
+│   ├── menu.html           # Choose between camera/upload
+│   ├── camera.html         # Live camera capture
+│   ├── upload.html         # Photo upload interface
+│   └── final.html          # Sticker editing & sharing
+├── 💻 JavaScript
+│   ├── home.js            # Homepage logic & animations
+│   ├── camera.js          # Camera handling & photo capture
+│   ├── upload.js          # File upload & processing
+│   └── final.js           # Sticker system & email sharing
+├── 🎨 Stylesheets
+│   ├── home.css           # Homepage styling
+│   ├── camera.css         # Camera page styling
+│   ├── upload.css         # Upload page styling
+│   └── final.css          # Final page styling
+├── 🖼️ Assets
+│   └── photobooth/
+│       ├── favicon.png    # Site icon
+│       ├── logo.png       # CS Club logo
+│       ├── camerapage/
+│       │   ├── frame/     # 5 decorative frames
+│       │   └── stickers/  # 6 interactive stickers
+│       ├── finalpage/     # UI button assets
+│       └── homepage/      # Homepage decorations
+└── ⚙️ Config
+    └── package.json       # Project metadata
 ```
 
-## Technology Stack 🛠
-- **Frontend**: Vanilla HTML5, CSS3, JavaScript
-- **Email Service**: EmailJS (no backend needed)
-- **Deployment**: Any static hosting (Vercel, GitHub Pages, Netlify)
-- **Styling**: Custom CSS with underwater theme
+## 🔄 Application Flow
 
-## License 📄
+1. **Homepage** (`index.html`) - Welcome screen with animated elements
+2. **Menu** (`menu.html`) - Choose camera capture or photo upload
+3. **Camera/Upload** - Capture 4 photos or upload existing ones
+4. **Final Editor** (`final.html`) - Add stickers, choose frames, share
+
+## 🛠️ Technology Stack
+
+- **Frontend**: Vanilla HTML5, CSS3, JavaScript (ES6+)
+- **Email Service**: [EmailJS](https://emailjs.com) - client-side email sending
+- **Camera API**: WebRTC MediaDevices API for live video capture
+- **File API**: HTML5 File API for photo uploads
+- **Canvas API**: HTML5 Canvas for image processing and sticker rendering
+- **Local Storage**: Browser storage for seamless page transitions
+- **CSS Features**: Flexbox, Grid, Custom Properties, Animations
+- **Deployment**: Static hosting compatible (Vercel, Netlify, GitHub Pages)
+
+## ⚙️ Technical Features
+
+### Advanced JavaScript
+- **Modular Design**: Separate JS files for each page functionality
+- **Error Handling**: Comprehensive try-catch blocks and user feedback
+- **Event Management**: Efficient event listeners with proper cleanup
+- **Canvas Manipulation**: Complex 2D rendering for stickers and frames
+- **File Processing**: Image upload, resize, and cropping algorithms
+
+### Modern CSS
+- **Responsive Layout**: Mobile-first design with breakpoints
+- **CSS Variables**: Consistent theming and easy customization
+- **Animations**: Smooth transitions and hover effects
+- **Flexbox/Grid**: Modern layout techniques
+- **Cross-browser**: Compatible styling across browsers
+
+### User Experience
+- **Accessibility**: Keyboard navigation and screen reader support
+- **Performance**: Optimized image loading and canvas operations
+- **Progressive Enhancement**: Works without JavaScript for basic functionality
+- **Mobile Optimization**: Touch-friendly controls and responsive design
+
+## 📧 Email Configuration
+
+The application uses EmailJS for email functionality:
+- ✅ **Pre-configured**: Ready-to-use email service
+- ✅ **No Backend**: Pure client-side solution
+- ✅ **Secure**: No server-side email credentials needed
+- ✅ **Reliable**: Professional email delivery service
+
+## 🚀 Deployment Options
+
+### Vercel (Recommended)
+- Zero configuration deployment
+- Automatic HTTPS
+- Global CDN
+- Perfect for static sites
+
+### Other Options
+- **GitHub Pages**: Free hosting for public repos
+- **Netlify**: Drag-and-drop deployment
+- **Firebase Hosting**: Google's static hosting
+- **Any Static Host**: Works with any provider
+
+## 🎯 Browser Support
+
+- **Chrome**: ✅ Full support
+- **Firefox**: ✅ Full support  
+- **Safari**: ✅ Full support
+- **Edge**: ✅ Full support
+- **Mobile**: ✅ iOS Safari, Android Chrome
+
+## 📄 License
 
 This project is licensed for **educational and personal use only**.
 
-- ✅ **Free to use** for educational and personal projects
-- ✅ **Modify and learn** from the code  
-- ❌ **Commercial use prohibited** - cannot be sold or used for profit
-- ❌ **No redistribution** for commercial purposes
+- ✅ **Educational Use**: Free for learning and academic projects
+- ✅ **Personal Use**: Use for personal, non-commercial purposes
+- ✅ **Modification**: Feel free to modify and improve the code
+- ❌ **Commercial Use**: Cannot be sold or used for commercial purposes
+- ❌ **Redistribution**: No commercial redistribution allowed
 
-By using this project, you agree to these terms.
+## 🏗️ Development
+
+Built with ❤️ for the UST Computer Science Club by the development team.
+
+### Contributing
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+---
+
+*Ready to capture some memories? Start the photobooth and have fun! 📸*
