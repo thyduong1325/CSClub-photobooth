@@ -157,11 +157,11 @@ function getStickerHandles(sticker) {
   };
   
   return {
-    resize: corners.bottomRight,
-    rotate: topCenter,
-    topLeft: corners.topLeft,
-    topRight: corners.topRight,
-    bottomLeft: corners.bottomLeft
+    resizeTopLeft: corners.topLeft,
+    resizeTopRight: corners.topRight,
+    resizeBottomLeft: corners.bottomLeft,
+    resizeBottomRight: corners.bottomRight,
+    rotate: topCenter
   };
 }
 
@@ -216,20 +216,24 @@ function pointerDown(e) {
   if (selectedSticker) {
     const handles = getStickerHandles(selectedSticker);
     
-    // Check resize handle
-    const resizeHandle = handles.resize;
-    if (Math.abs(mouseX - resizeHandle.x) <= HANDLE_SIZE && Math.abs(mouseY - resizeHandle.y) <= HANDLE_SIZE) {
-      isResizing = true;
-      canvas.style.cursor = 'grabbing'; // Set cursor for active resize
-      e.preventDefault();
-      return;
+    // Check all resize handles
+    for (const [handleType, handle] of Object.entries(handles)) {
+      if (handleType.startsWith('resize') && 
+          Math.abs(mouseX - handle.x) <= HANDLE_SIZE && 
+          Math.abs(mouseY - handle.y) <= HANDLE_SIZE) {
+        isResizing = true;
+        selectedSticker.resizeHandle = handleType; // Store which handle is being used
+        canvas.style.cursor = 'grabbing';
+        e.preventDefault();
+        return;
+      }
     }
     
     // Check rotate handle
     const rotateHandle = handles.rotate;
     if (Math.abs(mouseX - rotateHandle.x) <= HANDLE_SIZE && Math.abs(mouseY - rotateHandle.y) <= HANDLE_SIZE) {
       isRotating = true;
-      canvas.style.cursor = 'grabbing'; // Set cursor for active rotation
+      canvas.style.cursor = 'grabbing';
       e.preventDefault();
       return;
     }
@@ -282,36 +286,44 @@ function updateCursor(mouseX, mouseY) {
   let cursor = 'default';
   
   if (isResizing) {
-    cursor = 'nw-resize'; // During resize operation
+    cursor = 'grabbing'; // During resize operation
   } else if (isRotating) {
     cursor = 'grab'; // During rotation (could use 'grabbing' for active rotation)
   } else if (selectedSticker) {
     const handles = getStickerHandles(selectedSticker);
     
-    // Check if hovering over resize handle
-    const resizeHandle = handles.resize;
-    if (Math.abs(mouseX - resizeHandle.x) <= HANDLE_SIZE && Math.abs(mouseY - resizeHandle.y) <= HANDLE_SIZE) {
-      // Calculate resize direction based on handle position relative to sticker center
-      const centerX = selectedSticker.x + selectedSticker.width / 2;
-      const centerY = selectedSticker.y + selectedSticker.height / 2;
-      
-      // For bottom-right handle, show se-resize cursor
-      if (resizeHandle.x > centerX && resizeHandle.y > centerY) {
-        cursor = 'se-resize';
-      } else if (resizeHandle.x > centerX && resizeHandle.y < centerY) {
-        cursor = 'ne-resize';
-      } else if (resizeHandle.x < centerX && resizeHandle.y > centerY) {
-        cursor = 'sw-resize';
-      } else {
-        cursor = 'nw-resize';
+    // Check if hovering over any resize handle
+    let foundHandle = false;
+    for (const [handleType, handle] of Object.entries(handles)) {
+      if (handleType.startsWith('resize') && 
+          Math.abs(mouseX - handle.x) <= HANDLE_SIZE && 
+          Math.abs(mouseY - handle.y) <= HANDLE_SIZE) {
+        foundHandle = true;
+        // Set cursor based on corner position
+        switch (handleType) {
+          case 'resizeTopLeft':
+            cursor = 'nw-resize';
+            break;
+          case 'resizeTopRight':
+            cursor = 'ne-resize';
+            break;
+          case 'resizeBottomLeft':
+            cursor = 'sw-resize';
+            break;
+          case 'resizeBottomRight':
+            cursor = 'se-resize';
+            break;
+        }
+        break;
       }
     }
-    // Check if hovering over rotate handle
-    else if (Math.abs(mouseX - handles.rotate.x) <= HANDLE_SIZE && Math.abs(mouseY - handles.rotate.y) <= HANDLE_SIZE) {
+    
+    // Check if hovering over rotate handle (only if not already on resize handle)
+    if (!foundHandle && Math.abs(mouseX - handles.rotate.x) <= HANDLE_SIZE && Math.abs(mouseY - handles.rotate.y) <= HANDLE_SIZE) {
       cursor = 'grab'; // Rotation cursor
     }
-    // Check if hovering over sticker body
-    else if (isPointInSticker(mouseX, mouseY, selectedSticker)) {
+    // Check if hovering over sticker body (only if not on any handle)
+    else if (!foundHandle && isPointInSticker(mouseX, mouseY, selectedSticker)) {
       cursor = 'move'; // Move cursor when hovering over sticker
     }
   } else {
@@ -334,28 +346,69 @@ function pointerMove(e) {
     // Update cursor to grabbing during active resize
     canvas.style.cursor = 'grabbing';
     
-    // Resize sticker
-    const centerX = selectedSticker.x + selectedSticker.width / 2;
-    const centerY = selectedSticker.y + selectedSticker.height / 2;
+    // Resize sticker based on which handle is being used
+    const resizeHandle = selectedSticker.resizeHandle;
+    const originalAspectRatio = selectedSticker.img.width / selectedSticker.img.height;
     
-    let newWidth = Math.abs(mouseX - selectedSticker.x);
-    let newHeight = Math.abs(mouseY - selectedSticker.y);
+    let newWidth, newHeight, newX, newY;
     
-    // Maintain aspect ratio
-    const aspectRatio = selectedSticker.img.width / selectedSticker.img.height;
-    if (newWidth / newHeight > aspectRatio) {
-      newWidth = newHeight * aspectRatio;
-    } else {
-      newHeight = newWidth / aspectRatio;
+    switch (resizeHandle) {
+      case 'resizeTopLeft':
+        newWidth = selectedSticker.x + selectedSticker.width - mouseX;
+        newHeight = selectedSticker.y + selectedSticker.height - mouseY;
+        newX = mouseX;
+        newY = mouseY;
+        break;
+      case 'resizeTopRight':
+        newWidth = mouseX - selectedSticker.x;
+        newHeight = selectedSticker.y + selectedSticker.height - mouseY;
+        newX = selectedSticker.x;
+        newY = mouseY;
+        break;
+      case 'resizeBottomLeft':
+        newWidth = selectedSticker.x + selectedSticker.width - mouseX;
+        newHeight = mouseY - selectedSticker.y;
+        newX = mouseX;
+        newY = selectedSticker.y;
+        break;
+      case 'resizeBottomRight':
+      default:
+        newWidth = mouseX - selectedSticker.x;
+        newHeight = mouseY - selectedSticker.y;
+        newX = selectedSticker.x;
+        newY = selectedSticker.y;
+        break;
     }
     
-    // Minimum size
-    newWidth = Math.max(newWidth, 30);
-    newHeight = Math.max(newHeight, 30);
+    // Maintain aspect ratio
+    if (newWidth / newHeight > originalAspectRatio) {
+      newWidth = newHeight * originalAspectRatio;
+    } else {
+      newHeight = newWidth / originalAspectRatio;
+    }
     
-    // Update sticker position to keep center fixed
-    selectedSticker.x = centerX - newWidth / 2;
-    selectedSticker.y = centerY - newHeight / 2;
+    // Minimum size constraints
+    newWidth = Math.max(Math.abs(newWidth), 30);
+    newHeight = Math.max(Math.abs(newHeight), 30);
+    
+    // Adjust position based on resize direction
+    switch (resizeHandle) {
+      case 'resizeTopLeft':
+        selectedSticker.x = selectedSticker.x + selectedSticker.width - newWidth;
+        selectedSticker.y = selectedSticker.y + selectedSticker.height - newHeight;
+        break;
+      case 'resizeTopRight':
+        selectedSticker.y = selectedSticker.y + selectedSticker.height - newHeight;
+        break;
+      case 'resizeBottomLeft':
+        selectedSticker.x = selectedSticker.x + selectedSticker.width - newWidth;
+        break;
+      case 'resizeBottomRight':
+      default:
+        // Position stays the same for bottom-right resize
+        break;
+    }
+    
     selectedSticker.width = newWidth;
     selectedSticker.height = newHeight;
     
@@ -389,7 +442,10 @@ function pointerMove(e) {
 }
 
 function pointerUp() { 
-  if (selectedSticker) selectedSticker.dragging = false; 
+  if (selectedSticker) {
+    selectedSticker.dragging = false;
+    selectedSticker.resizeHandle = null; // Clear resize handle reference
+  }
   isResizing = false;
   isRotating = false;
   
