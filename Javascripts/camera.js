@@ -16,10 +16,13 @@ const elements = {
   countdownEl: document.querySelector('.countdown-timer'),
   frameOverlay: document.getElementById('frameOverlay'),
   prevFrameBtn: document.getElementById('prevFrame'),
-  nextFrameBtn: document.getElementById('nextFrame')
+  nextFrameBtn: document.getElementById('nextFrame'),
+  flashIndicator: document.getElementById('flashIndicator'),
+  flashOverlay: document.getElementById('flashOverlay')
 };
 
 let photoStage = 0; // 0=top1,1=top2,2=top3,3=top4,4=done
+let flashEnabled = false; // Flash indicator state
 
 // move video to quarter positions
 const moveVideoToHalf = i => {
@@ -30,6 +33,48 @@ const moveVideoToHalf = i => {
   video.style.left = '0';
   video.style.width = '100%';
   video.style.height = '160px'; // Slightly smaller than 25% to avoid overlap
+};
+
+// flash functionality
+const toggleFlash = () => {
+  const { flashIndicator } = elements;
+  
+  if (!flashIndicator) {
+    console.error('❌ Flash indicator not found!');
+    return;
+  }
+  
+  flashEnabled = !flashEnabled;
+  
+  if (flashEnabled) {
+    flashIndicator.classList.add('red');
+    console.log('📸 Flash enabled - indicator turned red');
+  } else {
+    flashIndicator.classList.remove('red');
+    console.log('📸 Flash disabled - indicator turned green');
+  }
+};
+
+const triggerFlash = () => {
+  if (!flashEnabled) return;
+  
+  const { flashOverlay } = elements;
+  
+  if (!flashOverlay) {
+    console.error('❌ Flash overlay not found!');
+    return;
+  }
+  
+  console.log('⚡ Triggering flash effect');
+  
+  // Show flash
+  flashOverlay.classList.add('active');
+  
+  // Hide flash after 300ms
+  setTimeout(() => {
+    flashOverlay.classList.remove('active');
+    console.log('⚡ Flash effect completed');
+  }, 300);
 };
 
 // countdown
@@ -52,6 +97,9 @@ const startCountdown = callback => {
 // capture photo
 const capturePhoto = () => {
   const { video, ctx, takePhotoBtn } = elements;
+
+  // Trigger flash effect if enabled
+  triggerFlash();
 
   const yOffset = photoStage * 634;
   const photoHeight = 621;
@@ -76,26 +124,29 @@ const capturePhoto = () => {
     sy = (vH - sh) / 2; 
   }
 
-  ctx.save();
-  ctx.translate(WIDTH, 0);
-  ctx.scale(-1, 1);
-  ctx.drawImage(video, sx, sy, sw, sh, 0, yOffset, WIDTH, photoHeight);
-  ctx.restore();
+  // Wait a moment for flash effect, then draw the image
+  setTimeout(() => {
+    ctx.save();
+    ctx.translate(WIDTH, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, sx, sy, sw, sh, 0, yOffset, WIDTH, photoHeight);
+    ctx.restore();
 
-  console.log(`📸 Photo ${photoStage + 1} captured!`);
-  photoStage++;
-  
-  if (photoStage < 4) {
-    // Move to next position and continue the photo sequence
-    moveVideoToHalf(photoStage);
-    // Wait 1 second, then start countdown for next photo
-    setTimeout(() => {
-      startCountdown(capturePhoto);
-    }, 1000);
-  } else {
-    // All 4 photos taken, finalize
-    finalizePhotoStrip();
-  }
+    console.log(`📸 Photo ${photoStage + 1} captured!`);
+    photoStage++;
+    
+    if (photoStage < 4) {
+      // Move to next position and continue the photo sequence
+      moveVideoToHalf(photoStage);
+      // Wait 1 second, then start countdown for next photo
+      setTimeout(() => {
+        startCountdown(capturePhoto);
+      }, 1000);
+    } else {
+      // All 4 photos taken, finalize
+      finalizePhotoStrip();
+    }
+  }, flashEnabled ? 100 : 0); // Delay slightly if flash is enabled for better effect
 };
 
 // start the complete photo sequence
@@ -189,7 +240,7 @@ const setupCamera = () => {
 
 // setup events
 const setupEventListeners = () => {
-  const { takePhotoBtn, downloadBtn } = elements;
+  const { takePhotoBtn, downloadBtn, flashIndicator } = elements;
 
   // Setup take photo button event listener
   if (takePhotoBtn) {
@@ -205,6 +256,14 @@ const setupEventListeners = () => {
     console.log('✅ Download button event listener added');
   } else {
     console.log('ℹ️ Download button not found - skipping (this is normal)');
+  }
+
+  // Setup flash indicator event listener
+  if (flashIndicator) {
+    flashIndicator.addEventListener('click', toggleFlash);
+    console.log('✅ Flash indicator event listener added');
+  } else {
+    console.log('ℹ️ Flash indicator not found - skipping');
   }
   
   // Enhanced keyboard support for takePhoto button
@@ -232,6 +291,13 @@ const setupEventListeners = () => {
         console.log('✅ Triggering photo sequence via Space bar');
         startPhotoSequence();
       }
+    }
+
+    // F key to toggle flash
+    if (e.key === 'f' || e.key === 'F') {
+      e.preventDefault();
+      console.log('🎯 F key pressed - toggling flash');
+      toggleFlash();
     }
   });
   
@@ -323,6 +389,8 @@ const initPhotoBooth = () => {
   console.log('- prevFrame:', document.getElementById('prevFrame'));
   console.log('- nextFrame:', document.getElementById('nextFrame'));
   console.log('- frameOverlay:', document.getElementById('frameOverlay'));
+  console.log('- flashIndicator:', document.getElementById('flashIndicator'));
+  console.log('- flashOverlay:', document.getElementById('flashOverlay'));
   
   try {
     console.log('📷 Setting up camera...');
@@ -357,6 +425,7 @@ const initPhotoBooth = () => {
   }
   
   console.log('✅ Photobooth initialization complete!');
+  console.log('⚡ Flash indicator available - click to toggle or press F key');
 };
 
 // Wait for DOM to be fully loaded

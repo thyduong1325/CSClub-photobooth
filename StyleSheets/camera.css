@@ -114,6 +114,49 @@ body {
   justify-content: center;
 }
 
+/* Flash indicator circle */
+.flash-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #00ff00; /* Green by default */
+  border: 2px solid white;
+  cursor: pointer;
+  z-index: 200;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.flash-indicator:hover {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  transform: scale(1.1);
+}
+
+.flash-indicator.red {
+  background-color: #ff0000; /* Red when flash is enabled */
+}
+
+/* Full screen flash overlay */
+.flash-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: white;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.1s ease-in-out;
+}
+
+.flash-overlay.active {
+  opacity: 0.9;
+}
+
 /* countdown timer */
 .countdown-timer {
   position: absolute;
