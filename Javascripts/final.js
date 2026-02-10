@@ -50,14 +50,30 @@ frameImage.src = `Assets/photobooth/camerapage/frame/frame ${currentFrame}.png`;
 frameImage.onload = () => drawCanvas(); // Redraw when frame loads
 
 // load photo
-const finalImage = new Image(), dataURL = localStorage.getItem('photoStrip');
+const finalImage = new Image();
+let dataURL = localStorage.getItem('photoStrip');
+
+// Fallback to sessionStorage if localStorage is empty
+if (!dataURL) {
+  dataURL = sessionStorage.getItem('photoStrip');
+  if (dataURL) {
+    console.log('📋 Found photo in sessionStorage (fallback)');
+  }
+}
+
 if (dataURL) {
   finalImage.src = dataURL;
   finalImage.onload = () => {
     drawCanvas(); // Initial draw when photo loads
   };
+  
+  // Clean up both storage locations
   localStorage.removeItem('photoStrip');
-} else alert("No photo found!");
+  sessionStorage.removeItem('photoStrip');
+  console.log(`📋 Loaded photo strip (${Math.round(dataURL.length/1024)}KB)`);
+} else {
+  alert("No photo found! Please go back and take photos first.");
+}
 
 // draw canvas
 function drawCanvas() {

@@ -182,11 +182,74 @@ const finalizePhotoStrip = () => {
   frame.src = `Assets/photobooth/camerapage/frame/frame ${currentFrame}.png`;
   frame.onload = () => {
     ctx.drawImage(frame, 0, 0, WIDTH, HEIGHT);
-    localStorage.setItem('photoStrip', canvas.toDataURL('image/png'));
+    
+    // Compress image for localStorage with multiple fallback strategies
+    let imageData;
+    let compressionSuccess = false;
+    
+    try {
+      // First try JPEG compression at high quality (smaller than PNG)
+      imageData = canvas.toDataURL('image/jpeg', 0.85);
+      
+      // Check if it fits in localStorage (aim for under 5MB)
+      if (imageData.length > 5000000) {
+        console.log('📊 Image too large, trying lower quality JPEG...');
+        imageData = canvas.toDataURL('image/jpeg', 0.7);
+      }
+      
+      if (imageData.length > 5000000) {
+        console.log('📊 Still too large, trying very low quality JPEG...');
+        imageData = canvas.toDataURL('image/jpeg', 0.5);
+      }
+      
+      // Try storing the compressed image
+      localStorage.setItem('photoStrip', imageData);
+      compressionSuccess = true;
+      console.log(`💾 Saved compressed photo strip (${Math.round(imageData.length/1024)}KB) to localStorage`);
+      
+    } catch (quotaError) {
+      console.error('❌ LocalStorage quota exceeded even with compression:', quotaError);
+      console.log(`📊 Image size was: ${Math.round(imageData.length/1024)}KB`);
+      
+      // Clear any existing localStorage data to make room
+      try {
+        localStorage.removeItem('photoStrip');
+        localStorage.removeItem('selectedFrame');
+        console.log('🧹 Cleared existing localStorage data');
+        
+        // Try one more time with very aggressive compression
+        imageData = canvas.toDataURL('image/jpeg', 0.3);
+        localStorage.setItem('photoStrip', imageData);
+        compressionSuccess = true;
+        console.log(`💾 Saved heavily compressed photo (${Math.round(imageData.length/1024)}KB) to localStorage`);
+        
+      } catch (finalError) {
+        console.error('❌ Final compression attempt failed:', finalError);
+        
+        // Use sessionStorage as fallback (larger quota)
+        try {
+          sessionStorage.setItem('photoStrip', imageData);
+          console.log('💾 Saved to sessionStorage as fallback');
+          compressionSuccess = true;
+        } catch (sessionError) {
+          console.error('❌ SessionStorage also failed:', sessionError);
+          alert('Photo is too large to transfer to editing page. This may happen with very detailed images or after many captures. Please refresh the page and try again.');
+          return;
+        }
+      }
+    }
+    
     // Save the current frame selection for the final page
-    localStorage.setItem('selectedFrame', currentFrame.toString());
-    console.log(`💾 Saved frame ${currentFrame} to localStorage`);
-    setTimeout(() => window.location.href = 'final.html', 50);
+    try {
+      localStorage.setItem('selectedFrame', currentFrame.toString());
+      console.log(`💾 Saved frame ${currentFrame} selection`);
+    } catch (frameError) {
+      console.log('⚠️ Could not save frame selection, using default');
+    }
+    
+    if (compressionSuccess) {
+      setTimeout(() => window.location.href = 'final.html', 50);
+    }
   };
   frame.complete && frame.onload();
 };
