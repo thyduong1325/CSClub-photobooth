@@ -22,7 +22,12 @@ const canvas = document.getElementById('finalCanvas'),
       emailInput = document.getElementById('emailInput'),
       sendEmailBtn = document.getElementById('sendEmailBtn'),
       cancelBtn = document.getElementById('cancelBtn'),
-      closeBtn = document.querySelector('.close'),
+      closeBtn = document.getElementById('closeEmailBtn') || document.querySelector('.close'),
+      shareModal = document.getElementById('shareModal'),
+      closeShareBtn = document.getElementById('closeShareBtn'),
+      copyPhotoBtn = document.getElementById('copyPhotoBtn'),
+      downloadShareBtn = document.getElementById('downloadShareBtn'),
+      emailShareBtn = document.getElementById('emailShareBtn'),
       frameOverlay = document.getElementById('finalFrameOverlay'),
       prevFrameBtn = document.getElementById('prevFrame'),
       nextFrameBtn = document.getElementById('nextFrame');
@@ -502,117 +507,165 @@ resetBtn.addEventListener('click', () => {
   drawCanvas(); 
 });
 
-// download
-downloadBtn.addEventListener('click', () => {
-  // Create download with timestamp
+// Helper to get formatted timestamp filename
+function getTimestampFilename() {
   const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-  const filename = `CS-Club-Photobooth-${timestamp}.png`;
-  
-  canvas.toBlob(blob => {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(a.href);
-  }, 'image/png');
+  return `CS-Club-Photobooth-${timestamp}.png`;
+}
+
+// Convert canvas synchronously to Blob to preserve user gesture
+function getCanvasBlob() {
+  if (selectedSticker) {
+    selectedSticker = null;
+    drawCanvas();
+  }
+  const dataUrl = canvas.toDataURL('image/png');
+  const binStr = atob(dataUrl.split(',')[1]);
+  const len = binStr.length;
+  const arr = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    arr[i] = binStr.charCodeAt(i);
+  }
+  return new Blob([arr], { type: 'image/png' });
+}
+
+// Download canvas image
+function downloadCanvas() {
+  const blob = getCanvasBlob();
+  const filename = getTimestampFilename();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+// Toast notification helper
+function showToast(message, duration = 3500) {
+  let toast = document.getElementById('toastNotification');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toastNotification';
+    toast.className = 'toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.classList.add('show');
+  clearTimeout(toast.timeoutId);
+  toast.timeoutId = setTimeout(() => {
+    toast.classList.remove('show');
+  }, duration);
+}
+
+// download button
+downloadBtn.addEventListener('click', () => {
+  downloadCanvas();
+  showToast('💾 Photo downloaded successfully!');
 });
 
-// share - native macOS share
+// share button - native AirDrop/Share where supported, modal fallback otherwise
 shareBtn.addEventListener('click', async () => {
+  console.log('🚀 Starting share process...');
+  
   try {
-    console.log('🚀 Starting native share process...');
-    
-    // Convert canvas to blob for native sharing
-    const blob = await new Promise(resolve => {
-      canvas.toBlob(resolve, 'image/png', 1.0);
-    });
-    
-    console.log('📊 Blob created:', blob.size, 'bytes');
-    
-    // Create file object with proper name
-    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-    const filename = `CS-Club-Photobooth-${timestamp}.png`;
+    const blob = getCanvasBlob();
+    const filename = getTimestampFilename();
     const file = new File([blob], filename, { type: 'image/png' });
-    
-    console.log('📄 File created:', filename, file.size, 'bytes');
 
-    // Check if Web Share API is supported
-    if (!navigator.share) {
-      throw new Error('Web Share API not supported');
+    // Check if Web Share API with file support is available (e.g. Safari on macOS, iOS Safari, Android)
+    let canShareFiles = false;
+    try {
+      canShareFiles = !!(navigator.share && navigator.canShare && navigator.canShare({ files: [file] }));
+    } catch (e) {
+      canShareFiles = false;
     }
-    
-    // Check if files can be shared
-    if (!navigator.canShare) {
-      console.log('⚠️ canShare not available, trying direct share...');
-    } else if (!navigator.canShare({ files: [file] })) {
-      throw new Error('File sharing not supported');
-    }
-    
-    console.log('✅ Share API checks passed, attempting share...');
-    
-    // Try sharing with file
-    await navigator.share({
-      title: '2026 Spring Activities Fair CS Club Photobooth',
-      text: 'Nice to see you at the 2026 Spring Activities Fair!',
-      files: [file]
-    });
-    
-    console.log('✅ Native share completed successfully!');
-    
-  } catch (error) {
-    console.error('❌ Native share failed:', error);
-    console.log('🔍 Error details:', {
-      name: error.name,
-      message: error.message,
-      navigator_share: !!navigator.share,
-      navigator_canShare: !!navigator.canShare,
-      userAgent: navigator.userAgent
-    });
-    
-    if (error.name === 'AbortError') {
-      // User cancelled the share - this is normal, don't show error
-      console.log('👤 User cancelled share');
+
+    if (canShareFiles) {
+      console.log('✅ Native file share supported, opening native share sheet...');
+      await navigator.share({
+        title: '2026 Spring Activities Fair CS Club Photobooth',
+        text: 'Nice to see you at the 2026 Spring Activities Fair!',
+        files: [file]
+      });
+      console.log('✅ Native share completed!');
       return;
     }
-    
-    // Fallback: Try sharing without file (just link)
-    try {
-      console.log('🔄 Trying fallback share without file...');
-      
-      if (navigator.share) {
-        await navigator.share({
-          title: '2026 Spring Activities Fair CS Club Photobooth',
-          text: 'Nice to see you at the 2026 Spring Activities Fair!',
-          url: window.location.href
-        });
-        
-        console.log('✅ Fallback share completed!');
-        alert('Shared link to photobooth! 🎉\n\nNote: The image couldn\'t be shared directly.\nTip: Use the Download button to save the image, then share manually via AirDrop.');
-        return;
-      }
-    } catch (fallbackError) {
-      console.error('❌ Fallback share also failed:', fallbackError);
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      console.log('👤 User cancelled native share');
+      return;
     }
-    
-    // Show helpful error message with alternatives
-    let errorMessage = 'Native sharing not available.\n\n';
-    let suggestions = [];
-    
-    if (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')) {
-      suggestions.push('• Try updating Safari to the latest version');
-      suggestions.push('• Make sure you\'re on macOS Big Sur or later');
-    } else {
-      suggestions.push('• Try using Safari instead of Chrome for better macOS integration');
-    }
-    
-    suggestions.push('• Use the Download button, then share the file manually via AirDrop');
-    suggestions.push('• Use the Email button to share via email');
-    
-    alert(errorMessage + 'Alternatives:\n' + suggestions.join('\n'));
+    console.warn('⚠️ Native share attempt failed, opening share modal:', error);
+  }
+
+  // Fallback: Open Share Modal for desktop browsers (Chrome, Firefox, etc.)
+  if (shareModal) {
+    shareModal.style.display = 'block';
   }
 });
+
+// Share modal event listeners
+if (closeShareBtn) {
+  closeShareBtn.addEventListener('click', () => {
+    shareModal.style.display = 'none';
+  });
+}
+
+if (copyPhotoBtn) {
+  copyPhotoBtn.addEventListener('click', async () => {
+    const originalContent = copyPhotoBtn.innerHTML;
+    copyPhotoBtn.disabled = true;
+
+    try {
+      const blob = getCanvasBlob();
+      if (navigator.clipboard && window.ClipboardItem) {
+        const item = new ClipboardItem({ 'image/png': blob });
+        await navigator.clipboard.write([item]);
+
+        copyPhotoBtn.innerHTML = `
+          <i class="fas fa-check" style="color: #28a745;"></i>
+          <div class="share-btn-text">
+            <span class="share-btn-title" style="color: #28a745;">Copied to Clipboard!</span>
+            <span class="share-btn-sub">Paste (Cmd+V) into Messages, Discord, etc.</span>
+          </div>
+        `;
+        copyPhotoBtn.classList.add('copied');
+        showToast('📸 Photo copied to clipboard! Paste (Cmd+V) to share.');
+
+        setTimeout(() => {
+          copyPhotoBtn.innerHTML = originalContent;
+          copyPhotoBtn.classList.remove('copied');
+          copyPhotoBtn.disabled = false;
+        }, 2500);
+      } else {
+        throw new Error('ClipboardItem API not supported');
+      }
+    } catch (err) {
+      console.warn('Clipboard write failed, downloading instead:', err);
+      downloadCanvas();
+      showToast('💾 Photo downloaded! You can share your saved file.');
+      copyPhotoBtn.innerHTML = originalContent;
+      copyPhotoBtn.disabled = false;
+    }
+  });
+}
+
+if (downloadShareBtn) {
+  downloadShareBtn.addEventListener('click', () => {
+    downloadCanvas();
+    shareModal.style.display = 'none';
+    showToast('💾 Photo downloaded!');
+  });
+}
+
+if (emailShareBtn) {
+  emailShareBtn.addEventListener('click', () => {
+    shareModal.style.display = 'none';
+    emailModal.style.display = 'block';
+  });
+}
 
 // email - EmailJS function
 emailBtn.addEventListener('click', () => {
@@ -819,6 +872,9 @@ window.addEventListener('click', (event) => {
     emailModal.style.display = 'none';
     emailInput.value = '';
   }
+  if (event.target === shareModal) {
+    shareModal.style.display = 'none';
+  }
 });
 
 // frame navigation functions
@@ -885,6 +941,11 @@ if (nextFrameBtn && prevFrameBtn) {
       // Deselect sticker
       selectedSticker = null;
       drawCanvas();
+      if (shareModal) shareModal.style.display = 'none';
+      if (emailModal) {
+        emailModal.style.display = 'none';
+        emailInput.value = '';
+      }
     } else if (selectedSticker && !e.ctrlKey && !e.metaKey) {
       // Rotate selected sticker with R key
       if (e.key === 'r' || e.key === 'R') {

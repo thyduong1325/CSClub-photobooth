@@ -61,8 +61,8 @@
   <!-- Email Modal -->
   <div id="emailModal" class="modal">
     <div class="modal-content">
-      <span class="close">&times;</span>
-      <h2>Share Your Photo</h2>
+      <span class="close" id="closeEmailBtn">&times;</span>
+      <h2>Email Your Photo</h2>
       <p>Enter an email address to share your photo:</p>
       <input type="email" id="emailInput" placeholder="Enter email address" required>
       <div class="modal-buttons">
@@ -71,6 +71,41 @@
       </div>
     </div>
   </div>
+
+  <!-- Share Modal -->
+  <div id="shareModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="closeShareBtn">&times;</span>
+      <h2>Share Your Photo</h2>
+      <p>Choose an option below to share your photo strip:</p>
+      <div class="share-modal-options">
+        <button id="copyPhotoBtn" class="share-action-btn">
+          <i class="fas fa-copy"></i>
+          <div class="share-btn-text">
+            <span class="share-btn-title">Copy to Clipboard</span>
+            <span class="share-btn-sub">Paste into iMessage, Discord, Slack, etc.</span>
+          </div>
+        </button>
+        <button id="downloadShareBtn" class="share-action-btn">
+          <i class="fas fa-download"></i>
+          <div class="share-btn-text">
+            <span class="share-btn-title">Download Image</span>
+            <span class="share-btn-sub">Save PNG file to your device</span>
+          </div>
+        </button>
+        <button id="emailShareBtn" class="share-action-btn">
+          <i class="fas fa-envelope"></i>
+          <div class="share-btn-text">
+            <span class="share-btn-title">Send via Email</span>
+            <span class="share-btn-sub">Email photo directly to an inbox</span>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastNotification" class="toast"></div>
 
   <script type="module" src="Javascripts/final.js"></script>
   
